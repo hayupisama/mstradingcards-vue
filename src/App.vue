@@ -1,19 +1,28 @@
 <template>
   <div id="app">
-    <NavBar />
-      <router-view />
-    </div>
+    <router-view />
+  </div>
 </template>
 
 <script>
-import NavBar from '@/components/NavBar.vue'; 
+import { setJwtToken } from "@/api/index.js"
 export default {
   name: 'App',
+  data() {
+    return {
+      jwt: localStorage.getItem("jwt")
+    }
+  },
   components: {
-    NavBar
+  },
+  created() {
+    if (!this.jwt)
+      this.$router.push('/login');
+    else {
+      setJwtToken(this.jwt);
+      this.$router.push("/mydashboard");
+    }
   }
 }
 </script>
-<style>
-
-</style>
+<style></style>
