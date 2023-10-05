@@ -9,9 +9,21 @@
             <div v-else>
                 <div class="card" v-for="deck in getPlayerListDeck" :key="deck.id">
                     <div class="card-body">
-                        <h5 class="card-title">{{ deck.deckName }}</h5>
-                        <p class="card-text">Deck Size: {{ deck.deckSize }}</p>
-                        <button class="btn btn-primary" @click="showEditDeckContent(deck)">Edit</button>
+                        <h5 class="card-title">DeckName : <em><strong>{{ deck.name }}</strong></em></h5>
+                        <p class="card-text">Deck Size: {{ deck.cards.length }}</p>
+                        <ul class="list-group" style="max-height: 300px; overflow-y: auto;">
+                            <li class="list-group-item text-dark" v-for="card in deck.cards" :key="card">
+                                {{ getCardFromId(card.split("_")[0]).name }}
+                                <span class="badge bg-success m-1">HP : {{ getCardFromId(card.split('_')[0]).health
+                                }}</span>
+                                <span class="badge bg-danger m-1">ATK : {{ getCardFromId(card.split('_')[0]).attack
+                                }}</span>
+                                <span class="badge m-1"
+                                    :style="{ backgroundColor: getRarityColor(getCardFromId(card.split('_')[0]).rarity) }">
+                                    {{ getCardFromId(card.split("_")[0]).rarity
+                                    }}</span>
+                            </li>
+                        </ul>
                         <button class="btn btn-danger" @click="deleteDeck(deck)">Delete</button>
                     </div>
                 </div>
@@ -92,15 +104,8 @@ export default {
         };
     },
     methods: {
-        showEditDeckContent(deck) {
-            console.log(`Show/Edit content for deck: ${deck.name}`);
-            this.$router.push("/mydeck")
-        },
         deleteDeck(deck) {
             console.log(`Delete deck: ${deck.name}`);
-        },
-        addDeck() {
-
         },
         calculateWinrate() {
             const totalGames = this.stats.victory + this.stats.defeat;
@@ -119,7 +124,7 @@ export default {
             this.currentPage--;
         },
         getImage(card) {
-            console.log(card.name)
+            card.name.toLowerCase();
             /* const apiKey = 'AIzaSyD3awVk8I8czHjQJZoZcxFVfgRCR3-4Z_w'; // Replace with your actual API key
              const cx = '80ff4cb0c625f4336'; // Replace with your actual custom search engine ID
  
@@ -137,7 +142,7 @@ export default {
         getRarityColor(rarity) {
             switch (rarity) {
                 case 'COMMON':
-                    return 'white';
+                    return 'lightgray';
                 case 'RARE':
                     return '#348feb';
                 case 'EPIC':
@@ -148,6 +153,10 @@ export default {
                     return 'yellow';
             }
         },
+        getCardFromId(cardId) {
+            const card = this.getUserCardCollections.find((cardItem) => cardItem.id == cardId);
+            return card;
+        }
     },
     computed: {
         displayedCards() {

@@ -2,6 +2,7 @@ import { createStore } from 'vuex'
 import loginModule from './login';
 import registerModule from './register';
 import dashboardModule from './dashboard';
+import deckModule from './deck';
 export default createStore({
   state: {
   },
@@ -14,6 +15,7 @@ export default createStore({
   modules: {
     login: loginModule,
     register: registerModule,
-    dashboard: dashboardModule
+    dashboard: dashboardModule,
+    deck: deckModule
   }
 })

@@ -1,177 +1,210 @@
 <template>
-    <div class="create-deck-container">
-        <div class="form-section">
-            <h2>Create Deck</h2>
-            <div class="form-group">
-                <label for="deckName">Deck Name</label>
-                <input type="text" id="deckName" v-model="deckName" required />
-                <label for="deckSize">Size : {{ deckComposition.length }}</label>
+    <div class="container mt-5">
+        <div v-if="isCardAdded" class="alert alert-success fixed-bottom fade show">
+            Card added to the deck
+        </div>
+        <!-- Top Part -->
+        <div class="row top-part fixed-top bg-dark text-light">
+            <div class="col-md-6">
+                <h2>Create your deck</h2>
             </div>
-            <div class="form-group">
-                <label for="filter">Filter Cards by Type</label>
-                <select id="filter" v-model="filterType">
-                    <option value="all">All Types</option>
-                </select>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="deckName">Deck Name</label>
+                    <input type="text" class="form-control" id="deckName" v-model="deckName">
+                </div>
+                <div class="form-group">
+                    <label>Deck Size: {{ deckComposition.length }}</label>
+                </div>
+                <div class="form-group">
+                    <label for="filterDropdown">Filter Cards</label>
+                    <select class="form-control" id="filterDropdown" v-model="filterType">
+                        <option value="all">All</option>
+                        <option value="common">Common</option>
+                        <option value="rare">Rare</option>
+                        <option value="legendary">Legendary</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-primary m-2"
+                        :disabled="deckComposition.length < 20 || deckComposition.length > 30 || deckName.length === 0"
+                        @click="saveDeck()">Save</button>
+                    <button class="btn btn-secondary m-2" @click="backToDashBoard()">Cancel</button>
+                    <button class="btn btn-warning m-2" @click="autoFill()">AutoFill</button>
+                </div>
             </div>
-            <button class="btn btn-success">Save</button>
-            <button class="btn btn-danger" @click="backToDashBoard()">Back</button>
         </div>
 
-        <div class="middle-section">
-            <div class="current-deck-section">
-                <h3>Current Deck Composition</h3>
-                <ul class="d-flex">
-                    <li v-for="card in deckComposition" :key="card.id">
-                        <div class="card" style="width: 12rem;" :style="{ backgroundColor: getRarityColor(card.rarity) }">
-                            <img src="" class="card-img-top" alt="">
-                            <div class="card-body">
-                                <h5 class="card-title">{{ card.name }}</h5>
-                                <p class="card-text">{{ card.description }}</p>
-                                <div class="health-pill">HP: {{ card.attackPoints }}</div>
-                                <div class="attack-pill">ATK: {{ card.healthPoints }}</div>
-                                <a class="btn btn-danger m-3" @click="removeCard(card)">Remove</a>
+        <!-- Middle Part - Deck Collection -->
+        <div class="row middle-part">
+            <div class="col-md-12">
+                <h3>Deck Composition</h3>
+                <div class="deck-composition d-flex flex-wrap justify-content-start">
+                    <div v-for="card in deckComposition" :key="card.id" class="tcg-card mb-4"
+                        :class="card.rarity.toLowerCase()" @click="removeFromDeck(card)">
+                        <div class="card-body ">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Harry_Potter_Trading_Card_Game_Logo.jpg/1137px-Harry_Potter_Trading_Card_Game_Logo.jpg?20180707150548"
+                                alt="Card Image" class="card-image">
+                            <h5 class="card-title">{{ card.name }}</h5>
+                            <p class="card-text">{{ truncateDescription(card.description) }}</p>
+                            <div class="card-stats d-flex flex-column w-50">
+                                <div class="health badge bg-success m-1">
+                                    <strong>HP:</strong> {{ card.health }}
+                                </div>
+                                <div class="attack badge bg-danger m-1">
+                                    <strong>ATK:</strong> {{ card.attack }}
+                                </div>
                             </div>
                         </div>
-                    </li>
-                </ul>
-            </div>
-
-            <div class="section card-collection">
-                <h2>Card Collection</h2>
-                <ul class="d-flex">
-                    <li v-for="card in cards" :key="card.id">
-                        <div class="card" style="width: 12rem;" :style="{ backgroundColor: getRarityColor(card.rarity) }">
-                            <img src="" class="card-img-top" alt="">
-                            <div class="card-body">
-                                <h5 class="card-title">{{ card.name }}</h5>
-                                <p class="card-text">{{ card.description }}</p>
-                                <div class="health-pill">HP: {{ card.attackPoints }}</div>
-                                <div class="attack-pill">ATK: {{ card.healthPoints }}</div>
-                                <a class="btn btn-primary m-3" @click="addCard(card)">Add</a>
-                            </div>
-                        </div>
-                    </li>
-                </ul>
+                    </div>
+                </div>
             </div>
         </div>
+
+        <!-- Bottom Part - Card Collection -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <h3>Card Collection</h3>
+                <div class="card-collection d-flex flex-wrap justify-content-center">
+                    <div v-for="card in getUserCardCollections" :key="card.id" class="tcg-card mb-4"
+                        :class="card.rarity.toLowerCase()" @click="addToDeck(card)">
+                        <div class="card-body ">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Harry_Potter_Trading_Card_Game_Logo.jpg/1137px-Harry_Potter_Trading_Card_Game_Logo.jpg?20180707150548"
+                                alt="Card Image" class="card-image">
+                            <h5 class="card-title">{{ card.name }}</h5>
+                            <p class="card-text"><em>{{ truncateDescription(card.description) }}</em></p>
+                            <div class="card-stats d-flex flex-column w-50">
+                                <div class="health badge bg-success m-1">
+                                    <strong>HP:</strong> {{ card.health }}
+                                </div>
+                                <div class="attack badge bg-danger m-1">
+                                    <strong>ATK:</strong> {{ card.attack }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </template>
-
 <script>
+import store from '@/store';
+import { mapGetters } from 'vuex';
 export default {
     data() {
         return {
             deckName: '',
             filterType: 'all',
             deckComposition: [],
-            cards: [
-                { id: 1, name: 'Card A', image: 'cardA.jpg', description: 'Description for Card A', rarity: 'Common', attackPoints: 2, healthPoints: 3 },
-                { id: 2, name: 'Card B', image: 'cardB.jpg', description: 'Description for Card B', rarity: 'Rare', attackPoints: 4, healthPoints: 2 },
-                { id: 3, name: 'Card C', image: 'cardC.jpg', description: 'Description for Card C', rarity: 'Epic', attackPoints: 5, healthPoints: 5 },
-                { id: 4, name: 'Card D', image: 'cardD.jpg', description: 'Description for Card D', rarity: 'Legendary', attackPoints: 5, healthPoints: 5 },
-                // Add more cards as needed
-            ]
+            isCardAdded: false
         };
     },
     computed: {
-        deckSize() {
-            return this.deckComposition.length;
-        }
+        ...mapGetters('dashboard', [
+            'getUserCardCollections'
+        ])
     },
     methods: {
-        addCard(card) {
+        addToDeck(card) {
             this.deckComposition.push(card);
+            this.isCardAdded = true;
         },
-        removeCard(card) {
+        removeFromDeck(card) {
             let index = this.deckComposition.findIndex(cardIn => card.id === cardIn.id)
             this.deckComposition.splice(index, 1);
         },
-        deckCompositionSize() {
-            return this.deckComposition.length;
-        },
-        getRarityColor(rarity) {
-            switch (rarity) {
-                case 'Common':
-                    return 'gray';
-                case 'Rare':
-                    return 'blue';
-                case 'Epic':
-                    return 'purple';
-                case 'Legendary':
-                    return 'orange';
-                default:
-                    return 'white';
-            }
-        },
         saveDeck() {
-            console.log("save");
+            store.dispatch("deck/createDeck", { deckComposition: this.deckComposition, deckName: this.deckName });
         },
         backToDashBoard() {
             this.$router.push("/mydashboard")
+        },
+        autoFill() {
+            this.deckComposition = [];
+            const randomCards = this.getRandomCards(30);
+            this.deckComposition = [...this.deckComposition, ...randomCards];
+        },
+        getRandomCards(num) {
+            const randomCards = [];
+            const listLength = this.getUserCardCollections.length;
+            for (let i = 0; i < num; i++) {
+                const randomIndex = Math.floor(Math.random() * listLength);
+                randomCards.push(this.getUserCardCollections[randomIndex]);
+            }
+            return randomCards;
+        },
+        truncateDescription(description) {
+            if (description.length > 150) {
+                return description.slice(0, 150) + '...';
+            }
+            return description;
+        },
+    },
+    watch: {
+        isCardAdded(newVal) {
+            if (newVal) {
+                setTimeout(() => {
+                    this.isCardAdded = false;
+                }, 2500);
+            }
         }
     }
 };
 </script>
 
-<style scoped>
-.create-deck-container {
-    display: flex;
-    flex-direction: column;
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
+<style>
+/* Add your custom CSS styles here */
+
+.top-part {
+    height: 200px;
+}
+
+.middle-part {
+    margin-top: 205px !important;
+}
+
+.tcg-card {
+    border-radius: 15px;
+    height: 250px;
+    width: 150px;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin: 10px;
+    cursor: pointer;
+}
+
+.card-body img {
+    height: 50px;
+    width: 100%;
 }
 
 .card-collection {
-    display: flex;
-    flex-wrap: wrap;
+    background-color: gray;
 }
 
-.card {
-    width: 200px;
-    padding: 10px;
-    margin: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+.card-text {
+    font-size: 10px;
 }
 
-.card img {
-    max-width: 100%;
-    max-height: 100px;
+.deck-composition {
+    background-color: lightblue;
 }
 
-.form-section,
-.middle-section {
-    margin-bottom: 20px;
+.common {
+    background-color: lightgray;
 }
 
-.form-group {
-    margin-bottom: 10px;
+.rare {
+    background-color: #348feb;
 }
 
-ul {
-    list-style: none;
-    padding: 0;
+.epic {
+    background-color: #a200fa;
 }
 
-li {
-    margin-bottom: 5px;
-}
-
-button {
-    margin-left: 10px;
-}
-
-.health-pill,
-.attack-pill {
-    background-color: #ff6961;
-    color: #fff;
-    border-radius: 20px;
-    padding: 5px 10px;
-    margin-right: 10px;
-}
-
-.health-pill {
-    background-color: green;
+.legendary {
+    background-color: #f24500;
 }
 </style>
